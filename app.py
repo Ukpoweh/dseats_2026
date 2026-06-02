@@ -278,6 +278,19 @@ GEO_LAYOUT = dict(
 )
 
 # ─────────────────────────────────────────────
+# WELL DATA  (notebook output)
+# ─────────────────────────────────────────────
+@st.cache_data
+def load_well_data():
+    try:
+        df = pd.read_excel("final_geotwin_results.xlsx")
+        return df.sort_values("FINAL_INDEX", ascending=False).reset_index(drop=True)
+    except Exception:
+        return None
+
+df_wells = load_well_data()
+
+# ─────────────────────────────────────────────
 # HEADER
 # ─────────────────────────────────────────────
 col_logo, col_title = st.columns([1, 8])
@@ -318,7 +331,7 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-OPTIMAL_DEFAULTS = {"flow": 80, "demand": 18, "storage": 160, "hp": 2.50}
+OPTIMAL_DEFAULTS = {"flow": 65, "demand": 18, "storage": 30, "hp": 2.50}
 for key, val in OPTIMAL_DEFAULTS.items():
     if key not in st.session_state:
         st.session_state[key] = val
@@ -556,60 +569,43 @@ with tab1:
 with tab2:
     st.markdown("#### AI-RQI v3 — Subsurface Well Characterization Engine")
 
-    # Styled well table with HTML badges
-    well_html = """
-    <table style="width:100%;border-collapse:collapse;font-family:'DM Sans',sans-serif;font-size:0.82rem">
-      <thead>
-        <tr style="border-bottom:1px solid rgba(0,210,140,0.2)">
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">Rank</th>
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">Well ID</th>
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">PHI_ML</th>
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">PERM_PHY</th>
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">RFPI</th>
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">GRI</th>
-          <th style="padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#00d28c;font-weight:700">01</td>
-          <td style="padding:12px 14px;font-weight:600">BLT-01</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">12.65%</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">0.002654</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#00d28c">0.043196</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#00d28c">0.8825</td>
-          <td style="padding:12px 14px"><span class="tag-sel">PRODUCTION ANCHOR</span></td>
-        </tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#00b4d8;font-weight:700">02</td>
-          <td style="padding:12px 14px;font-weight:600">JUT-01</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">9.33%</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">0.000989</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#00b4d8">0.011767</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#00b4d8">0.4296</td>
-          <td style="padding:12px 14px"><span class="tag-ret">INJECTION ANCHOR</span></td>
-        </tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#f4a532;font-weight:700">03</td>
-          <td style="padding:12px 14px;font-weight:600">EVD-01</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">8.72%</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">0.000795</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#f4a532">0.005399</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#f4a532">0.3261</td>
-          <td style="padding:12px 14px"><span class="tag-std">MARGINAL STANDBY</span></td>
-        </tr>
-        <tr>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#ff4d6d;font-weight:700">04</td>
-          <td style="padding:12px 14px;font-weight:600">PKP-01</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">6.88%</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace">0.000375</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#ff4d6d">0.001882</td>
-          <td style="padding:12px 14px;font-family:'Space Mono',monospace;color:#ff4d6d">-0.0045</td>
-          <td style="padding:12px 14px"><span class="tag-exc">EXCLUDED — CAPEX RISK</span></td>
-        </tr>
-      </tbody>
-    </table>
-    """
+    _rank_colors  = ["#00d28c", "#00b4d8", "#f4a532", "#ff4d6d"]
+    _status_map   = [
+        ("PRODUCTION ANCHOR",    "tag-sel"),
+        ("INJECTION ANCHOR",     "tag-ret"),
+        ("MARGINAL STANDBY",     "tag-std"),
+        ("EXCLUDED — CAPEX RISK","tag-exc"),
+    ]
+    _th = "padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:rgba(255,255,255,0.4);text-transform:uppercase"
+
+    if df_wells is not None:
+        _rows = ""
+        for _i, _r in df_wells.iterrows():
+            _c   = _rank_colors[min(_i, 3)]
+            _lbl, _cls = _status_map[min(_i, 3)]
+            _sep = "" if _i == len(df_wells) - 1 else "border-bottom:1px solid rgba(255,255,255,0.04)"
+            _rows += (
+                f'<tr style="{_sep}">'
+                f'<td style="padding:12px 14px;font-family:\'Space Mono\',monospace;color:{_c};font-weight:700">{_i+1:02d}</td>'
+                f'<td style="padding:12px 14px;font-weight:600">{_r["WELL"]}</td>'
+                f'<td style="padding:12px 14px;font-family:\'Space Mono\',monospace">{_r["PHI_ML"]*100:.2f}%</td>'
+                f'<td style="padding:12px 14px;font-family:\'Space Mono\',monospace">{_r["PERM_PHY"]:.6f}</td>'
+                f'<td style="padding:12px 14px;font-family:\'Space Mono\',monospace;color:{_c}">{_r["RFPI"]:.6f}</td>'
+                f'<td style="padding:12px 14px;font-family:\'Space Mono\',monospace;color:{_c}">{_r["FINAL_INDEX"]:.4f}</td>'
+                f'<td style="padding:12px 14px"><span class="{_cls}">{_lbl}</span></td>'
+                f'</tr>'
+            )
+        well_html = (
+            '<table style="width:100%;border-collapse:collapse;font-family:\'DM Sans\',sans-serif;font-size:0.82rem">'
+            '<thead><tr style="border-bottom:1px solid rgba(0,210,140,0.2)">'
+            f'<th style="{_th}">Rank</th><th style="{_th}">Well ID</th>'
+            f'<th style="{_th}">PHI_ML</th><th style="{_th}">PERM_PHY</th>'
+            f'<th style="{_th}">RFPI</th><th style="{_th}">GRI</th><th style="{_th}">Status</th>'
+            f'</tr></thead><tbody>{_rows}</tbody></table>'
+        )
+    else:
+        well_html = "<p style='color:rgba(255,255,255,0.4);font-family:Space Mono,monospace;font-size:0.8rem'>⚠ final_geotwin_results.xlsx not found — place it in the app directory.</p>"
+
     st.markdown(well_html, unsafe_allow_html=True)
     st.write("")
 
@@ -637,23 +633,42 @@ with tab2:
 
     # ── Radar chart for top 2 wells ──
     with col_radar:
-        st.markdown("##### BLT-01 vs JUT-01 — Attribute Profile")
         cats = ["Porosity", "Permeability", "RFPI", "GRI Score", "Certainty"]
-        blt  = [1.00, 1.00, 1.00, 0.88, 0.60]
-        jut  = [0.43, 0.37, 0.24, 0.43, 0.99]
+        if df_wells is not None and len(df_wells) >= 2:
+            _w1, _w2 = df_wells.iloc[0], df_wells.iloc[1]
+            _w1_name, _w2_name = _w1["WELL"], _w2["WELL"]
 
+            def _norm(col):
+                mx = df_wells[col].max()
+                return (df_wells[col] / mx).tolist() if mx != 0 else [0.0] * len(df_wells)
+
+            _phi  = _norm("PHI_ML")
+            _perm = _norm("PERM_PHY")
+            _rfpi = _norm("RFPI")
+            _gri  = _norm("FINAL_INDEX")
+            _cert_raw = 1 - df_wells["AI_uncertainty"]
+            _cert = (_cert_raw / _cert_raw.max()).tolist()
+
+            blt = [_phi[0], _perm[0], _rfpi[0], _gri[0], _cert[0]]
+            jut = [_phi[1], _perm[1], _rfpi[1], _gri[1], _cert[1]]
+        else:
+            _w1_name, _w2_name = "BLT-01", "JUT-01"
+            blt = [1.00, 1.00, 1.00, 0.88, 0.60]
+            jut = [0.43, 0.37, 0.24, 0.43, 0.99]
+
+        st.markdown(f"##### {_w1_name} vs {_w2_name} — Attribute Profile")
         fig_radar = go.Figure()
         fig_radar.add_trace(go.Scatterpolar(
             r=blt + [blt[0]], theta=cats + [cats[0]],
             fill="toself", fillcolor="rgba(0,210,140,0.12)",
             line=dict(color="#00d28c", width=2),
-            name="BLT-01",
+            name=_w1_name,
         ))
         fig_radar.add_trace(go.Scatterpolar(
             r=jut + [jut[0]], theta=cats + [cats[0]],
             fill="toself", fillcolor="rgba(0,180,216,0.10)",
             line=dict(color="#00b4d8", width=2, dash="dot"),
-            name="JUT-01",
+            name=_w2_name,
         ))
         fig_radar.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
